@@ -6,7 +6,9 @@ import redisClient from "../config/redis.js";
 export const createReservation = async (req,res) => {
     try {
 
-        const {userId , tableId , restaurantId , date , startTime , endTime} = req.body;
+        const { tableId , restaurantId , date , startTime , endTime} = req.body;
+
+        const userId = req.user._id
 
         if(!userId || !tableId || !restaurantId || !date || !startTime ||  !endTime){
             return res.json({

@@ -5,7 +5,9 @@ import User from "../models/User.js";
 export const createRestaurant = async (req,res) => {
     try {
 
-        const {name , location , openingTime , closingTime , cuisine , owner} = req.body;
+        const {name , location , openingTime , closingTime , cuisine} = req.body;
+
+        const {owner} = req.user._id;
 
         if(!name || !location || !openingTime || !closingTime || !cuisine || !owner){
             return res.json({
