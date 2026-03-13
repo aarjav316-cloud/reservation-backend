@@ -4,13 +4,18 @@ import Waitlist from "../models/Waitlist.js";
 export const joinWaitlist = async(req,res) => {
     try {
 
-        const {userId , restaurantId , date , startTime} = req.body;
+        const { guests , restaurantId , date , startTime , endTime } = req.body;
+
+        const userId  = req.user._id
 
         const wait = await Waitlist.create({
+            user:userId,
             restaurant:restaurantId,
+            guests,
             user:userId,
             date,
-            startTime
+            startTime,
+            endTime
         })
 
         return res.json({

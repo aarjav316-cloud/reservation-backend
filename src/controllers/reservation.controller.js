@@ -1,6 +1,7 @@
 import Reservation from "../models/Reservation.js";
 import Table from "../models/Table.js";
 import redisClient from "../config/redis.js";
+import Waitlist from "../models/Waitlist.js";
 
 
 
@@ -137,16 +138,45 @@ export const cancelReservation = async(req,res) => {
 
         const {id} = req.params;
 
-        const reservation = await Reservation.findByIdAndUpdate(
-            id,
-            {status:"cancelled"},
-            {new:true}
-        )
+        const reservation = await Reservation.findById(id)   
+
+        if(!reservation){
+            return res.json({
+                success:false,
+                message:"reservation not found"
+            })
+        }
+
+        reservation.status ="cancelled";
+
+        await reservation.save()
+
+         const waitListUser = await Waitlist.findOne({
+
+            restaurant:reservation.restaurant,
+            date:reservation.date,
+            startTime:reservation.startTime,
+
+         }).sort({createdAt:1})
+
+         const newReservation = await Reservation.create({
+
+            user:waitListUser.user,
+            restaurant:reservation.restaurant,
+            table:reservation.table,
+            date:reservation.date,
+            startTime:reservation.startTime,
+            endTime:reservation.endTime,
+            status:"confirmed"
+
+         })
+
+         await waitListUser.deleteOne()
 
         return res.json({
             success:true,
-            message:"reservation updated successfully",
-            reservation
+            message:"reservation cancelled",
+            
         })
         
     } catch (error) {
