@@ -18,10 +18,18 @@ const waitlistSchema = new  mongoose.Schema({
         type:String,
         required:true
     },
+    guests:{
+      type:Number,
+      required:true
+    },
     startTime:{
         type:String,
         required:true
-    }
+    },
+    endTime:{
+        type:String,
+        required:true
+       }
 
 },{timestamps:true})
 

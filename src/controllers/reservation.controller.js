@@ -3,8 +3,6 @@ import Table from "../models/Table.js";
 import redisClient from "../config/redis.js";
 
 
-import Table from "../models/Table.js"
-import Reservation from "../models/Reservation.js"
 
 export const createReservation = async (req,res) => {
 
@@ -158,6 +156,7 @@ export const cancelReservation = async(req,res) => {
         })
     }
 }
+
 
 
 
