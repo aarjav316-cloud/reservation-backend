@@ -12,7 +12,7 @@ export const joinWaitlist = async(req,res) => {
             user:userId,
             restaurant:restaurantId,
             guests,
-            user:userId,
+            
             date,
             startTime,
             endTime
