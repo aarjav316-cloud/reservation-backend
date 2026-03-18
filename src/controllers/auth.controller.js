@@ -58,7 +58,7 @@ export const loginUser = async(req,res) => {
                 message:"insuffient credentials"
             })
         }
-
+        
         const user = await User.findOne({email})
 
         if(!user){

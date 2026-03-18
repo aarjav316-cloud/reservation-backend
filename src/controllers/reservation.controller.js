@@ -2,6 +2,7 @@ import Reservation from "../models/Reservation.js";
 import Table from "../models/Table.js";
 import redisClient from "../config/redis.js";
 import Waitlist from "../models/Waitlist.js";
+import { getIo } from "../sockets/socket.js";
 
 
 
@@ -20,7 +21,7 @@ export const createReservation = async (req,res) => {
    })
   }
 
-  // 1️⃣ find all tables for restaurant
+  //  find all tables for restaurant
   const tables = await Table.find({
    restaurant:restaurantId,
    status:"available"
@@ -33,7 +34,7 @@ export const createReservation = async (req,res) => {
    })
   }
 
-  // 2️⃣ filter tables with enough capacity
+  //  filter tables with enough capacity
   const suitableTables = tables.filter(
    table => table.capacity >= guests
   )
@@ -45,12 +46,12 @@ export const createReservation = async (req,res) => {
    })
   }
 
-  // 3️⃣ sort tables by capacity
+  //  sort tables by capacity
   suitableTables.sort((a,b)=>a.capacity-b.capacity)
 
   let selectedTable = null
 
-  // 4️⃣ check time conflicts
+  //  check time conflicts
   for(const table of suitableTables){
 
    const conflict = await Reservation.findOne({
@@ -84,6 +85,15 @@ export const createReservation = async (req,res) => {
    startTime,
    endTime,
    status:"confirmed"
+  })
+
+  const io = getIo()
+
+  io.emit("reservation created" , {
+    restaurantId,
+    table:  selectedTable._id,
+    date,
+    startTime
   })
 
   return res.status(201).json({
@@ -151,25 +161,42 @@ export const cancelReservation = async(req,res) => {
 
         await reservation.save()
 
-         const waitListUser = await Waitlist.findOne({
+        const io = getIO()
 
-            restaurant:reservation.restaurant,
-            date:reservation.date,
-            startTime:reservation.startTime,
-
-         }).sort({createdAt:1})
-
-         const newReservation = await Reservation.create({
-
-            user:waitListUser.user,
-            restaurant:reservation.restaurant,
-            table:reservation.table,
-            date:reservation.date,
-            startTime:reservation.startTime,
-            endTime:reservation.endTime,
-            status:"confirmed"
-
+         io.to(`restaurant_${reservation.restaurant}`).emit("table_freed", {
+           tableId: reservation.table,
+           restaurantId: reservation.restaurant
          })
+
+         const waitListUser = await Waitlist.findOne({
+            restaurant: reservation.restaurant,
+            date: reservation.date,
+            startTime: reservation.startTime
+          }).sort({ createdAt: 1 })
+          
+          if (waitListUser) {
+          
+            const newReservation = await Reservation.create({
+              user: waitListUser.user,
+              restaurant: reservation.restaurant,
+              table: reservation.table,
+              date: reservation.date,
+              startTime: reservation.startTime,
+              endTime: reservation.endTime,
+              status: "confirmed"
+            })
+
+            const io = getIO()
+
+             io.to(`user_${waitListUser.user}`).emit("waitlist_notified", {
+               userId: waitListUser.user,
+               restaurantId: reservation.restaurant,
+               tableId: reservation.table
+             })
+          
+            await waitListUser.deleteOne()
+          
+          }
 
          await waitListUser.deleteOne()
 
@@ -186,7 +213,6 @@ export const cancelReservation = async(req,res) => {
         })
     }
 }
-
 
 
 

@@ -67,7 +67,7 @@ export const updateTableStatus = async (req,res) => {
 
         if(!status){
             return res.json({
-                success:true,
+                success:false,
                 message:"insufficient credentials"
             })
         }
@@ -85,7 +85,7 @@ export const updateTableStatus = async (req,res) => {
          
     } catch (error) {
         return res.json({
-            success:true,
+            success:false,
             message:error.message
         })
     }

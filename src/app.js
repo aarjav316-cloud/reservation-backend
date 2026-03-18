@@ -2,9 +2,11 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import morgan from 'morgan'
+import http from 'http'
 
 import connectDb from './config/db.js'
 import redisClient from './config/redis.js'
+import { initSocket } from './sockets/socket.js'
 
 import authRoutes from './routes/auth.routes.js'
 import restaurantRoutes from './routes/restaurant.route.js'
@@ -17,6 +19,10 @@ dotenv.config()
 
 
 const app = express()
+
+const server = http.createServer(app)
+
+initSocket(server)
 
 app.use(express.json())
 app.use(cors())
@@ -41,7 +47,9 @@ const startServer = async () => {
 
         await connectDb()
 
-        app.listen(PORT , () => {
+        await redisClient.connect()
+
+        server.listen(PORT , () => {
             console.log(`server running on port ${PORT}`)
         })
         
@@ -51,8 +59,6 @@ const startServer = async () => {
 }
 
 startServer()
-
-
 
 
 
